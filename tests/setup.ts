@@ -17,3 +17,7 @@ delete process.env.AIRTABLE_API_KEY;
 delete process.env.AIRTABLE_ACCESS_TOKEN;
 delete process.env.CLICKUP_API_TOKEN;
 delete process.env.CLICKUP_PERSONAL_TOKEN;
+delete process.env.NOTION_API_TOKEN;
+delete process.env.NOTION_TOKEN;
+delete process.env.NOTION_API_KEY;
+delete process.env.NOTION_VERSION;

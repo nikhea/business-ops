@@ -28,6 +28,14 @@ import { clickupTimeTools } from "./tools/clickup/clickup-time";
 import { clickupFieldTools } from "./tools/clickup/clickup-fields";
 import { clickupWebhookTools } from "./tools/clickup/clickup-webhooks";
 import { clickupChecklistTools } from "./tools/clickup/clickup-checklists";
+import { notionUserTools } from "./tools/notion/notion-users";
+import { notionSearchTools } from "./tools/notion/notion-search";
+import { notionBlockTools } from "./tools/notion/notion-blocks";
+import { notionPageTools } from "./tools/notion/notion-pages";
+import { notionMarkdownTools } from "./tools/notion/notion-markdown";
+import { notionDatabaseTools } from "./tools/notion/notion-databases";
+import { notionDataSourceTools } from "./tools/notion/notion-data-sources";
+import { notionCommentTools } from "./tools/notion/notion-comments";
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -50,6 +58,14 @@ export const mastra = new Mastra({
     ...clickupFieldTools,
     ...clickupWebhookTools,
     ...clickupChecklistTools,
+    ...notionUserTools,
+    ...notionSearchTools,
+    ...notionBlockTools,
+    ...notionPageTools,
+    ...notionMarkdownTools,
+    ...notionDatabaseTools,
+    ...notionDataSourceTools,
+    ...notionCommentTools,
   },
   server: {
     port: 5000,
