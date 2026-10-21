@@ -3,7 +3,9 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "PORT=$MASTRA_PORT mastra dev",
-    "google:auth": "bun run scripts/google-oauth.ts"
+    "google:auth": "bun run scripts/google-oauth.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@chat-adapter/slack": "^4.43.0",
@@ -25,6 +27,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "vitest": "^5.0.5"
   }
 }

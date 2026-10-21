@@ -16,6 +16,7 @@ import { calendarTools } from "./tools/google/calendar-rest";
 import { driveTools } from "./tools/google/drive-rest";
 import { sheetsTools } from "./tools/google/sheets-rest";
 import { docsTools } from "./tools/google/docs-rest";
+import { meetTools } from "./tools/google/meet-rest";
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -26,6 +27,7 @@ export const mastra = new Mastra({
     ...driveTools,
     ...sheetsTools,
     ...docsTools,
+    ...meetTools,
   },
   server: {
     port: 5000,
