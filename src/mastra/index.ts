@@ -36,6 +36,14 @@ import { notionMarkdownTools } from "./tools/notion/notion-markdown";
 import { notionDatabaseTools } from "./tools/notion/notion-databases";
 import { notionDataSourceTools } from "./tools/notion/notion-data-sources";
 import { notionCommentTools } from "./tools/notion/notion-comments";
+import { resendEmailTools } from "./tools/resend/resend-emails";
+import { resendDomainTools } from "./tools/resend/resend-domains";
+import { resendContactTools } from "./tools/resend/resend-contacts";
+import { resendSegmentTools } from "./tools/resend/resend-segments";
+import { resendBroadcastTools } from "./tools/resend/resend-broadcasts";
+import { resendTemplateTools } from "./tools/resend/resend-templates";
+import { resendWebhookTools } from "./tools/resend/resend-webhooks";
+import { resendTopicTools } from "./tools/resend/resend-topics";
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -66,6 +74,14 @@ export const mastra = new Mastra({
     ...notionDatabaseTools,
     ...notionDataSourceTools,
     ...notionCommentTools,
+    ...resendEmailTools,
+    ...resendDomainTools,
+    ...resendContactTools,
+    ...resendSegmentTools,
+    ...resendBroadcastTools,
+    ...resendTemplateTools,
+    ...resendWebhookTools,
+    ...resendTopicTools,
   },
   server: {
     port: 5000,

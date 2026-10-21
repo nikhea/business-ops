@@ -21,3 +21,5 @@ delete process.env.NOTION_API_TOKEN;
 delete process.env.NOTION_TOKEN;
 delete process.env.NOTION_API_KEY;
 delete process.env.NOTION_VERSION;
+delete process.env.RESEND_API_KEY;
+delete process.env.RESEND_TOKEN;
