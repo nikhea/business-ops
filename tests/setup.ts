@@ -12,3 +12,8 @@ delete process.env.GOOGLE_ACCESS_TOKEN;
 delete process.env.GOOGLE_REFRESH_TOKEN;
 delete process.env.REDIS_URL;
 delete process.env.REDIS_API_KEY;
+delete process.env.AIRTABLE_PAT;
+delete process.env.AIRTABLE_API_KEY;
+delete process.env.AIRTABLE_ACCESS_TOKEN;
+delete process.env.CLICKUP_API_TOKEN;
+delete process.env.CLICKUP_PERSONAL_TOKEN;

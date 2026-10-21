@@ -17,6 +17,17 @@ import { driveTools } from "./tools/google/drive-rest";
 import { sheetsTools } from "./tools/google/sheets-rest";
 import { docsTools } from "./tools/google/docs-rest";
 import { meetTools } from "./tools/google/meet-rest";
+import { airtableMetaTools } from "./tools/airtable/airtable-meta";
+import { airtableRecordTools } from "./tools/airtable/airtable-records";
+import { airtableCommentTools } from "./tools/airtable/airtable-comments";
+import { airtableWebhookTools } from "./tools/airtable/airtable-webhooks";
+import { clickupWorkspaceTools } from "./tools/clickup/clickup-workspace";
+import { clickupTaskTools } from "./tools/clickup/clickup-tasks";
+import { clickupCommentTools } from "./tools/clickup/clickup-comments";
+import { clickupTimeTools } from "./tools/clickup/clickup-time";
+import { clickupFieldTools } from "./tools/clickup/clickup-fields";
+import { clickupWebhookTools } from "./tools/clickup/clickup-webhooks";
+import { clickupChecklistTools } from "./tools/clickup/clickup-checklists";
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -28,6 +39,17 @@ export const mastra = new Mastra({
     ...sheetsTools,
     ...docsTools,
     ...meetTools,
+    ...airtableMetaTools,
+    ...airtableRecordTools,
+    ...airtableCommentTools,
+    ...airtableWebhookTools,
+    ...clickupWorkspaceTools,
+    ...clickupTaskTools,
+    ...clickupCommentTools,
+    ...clickupTimeTools,
+    ...clickupFieldTools,
+    ...clickupWebhookTools,
+    ...clickupChecklistTools,
   },
   server: {
     port: 5000,
