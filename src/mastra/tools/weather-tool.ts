@@ -1,4 +1,4 @@
-import { createTool } from '@mastra/core/tools';
+import { createTool, type ToolObserve } from '@mastra/core/tools';
 import { z } from 'zod';
 
 interface GeocodingResponse {
@@ -35,26 +35,64 @@ export const weatherTool = createTool({
     conditions: z.string(),
     location: z.string(),
   }),
-  execute: async (inputData) => {
-    return await getWeather(inputData.location);
+  execute: async ({ location }, { observe }) => {
+    observe.log('info', 'weather lookup started', { location });
+
+    try {
+      const weather = await getWeather(location, observe);
+      observe.log('info', 'weather lookup succeeded', {
+        location: weather.location,
+        temperature: weather.temperature,
+        conditions: weather.conditions,
+      });
+      return weather;
+    } catch (error) {
+      observe.log('error', 'weather lookup failed', {
+        location,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   },
 });
 
-const getWeather = async (location: string) => {
-  const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`;
-  const geocodingResponse = await fetch(geocodingUrl);
-  const geocodingData = (await geocodingResponse.json()) as GeocodingResponse;
+const getWeather = async (location: string, observe: ToolObserve) => {
+  const geocodingData = await observe.span(
+    'geocode location',
+    async () => {
+      const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`;
+      const geocodingResponse = await fetch(geocodingUrl);
+
+      if (!geocodingResponse.ok) {
+        throw new Error(`Geocoding request failed with status ${geocodingResponse.status}`);
+      }
+
+      return (await geocodingResponse.json()) as GeocodingResponse;
+    },
+    { location },
+  );
 
   if (!geocodingData.results?.[0]) {
+    observe.log('warn', 'no geocoding match', { location });
     throw new Error(`Location '${location}' not found`);
   }
 
   const { latitude, longitude, name } = geocodingData.results[0];
 
-  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,weather_code`;
+  const data = await observe.span(
+    'fetch forecast',
+    async () => {
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,weather_code`;
+      const response = await fetch(weatherUrl);
 
-  const response = await fetch(weatherUrl);
-  const data = (await response.json()) as WeatherResponse;
+      if (!response.ok) {
+        throw new Error(`Forecast request failed with status ${response.status}`);
+      }
+
+      return (await response.json()) as WeatherResponse;
+    },
+    { latitude, longitude },
+  );
 
   return {
     temperature: data.current.temperature_2m,

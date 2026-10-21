@@ -12,6 +12,12 @@ import { weatherAgent } from './agents/weather-agent';
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
   agents: { weatherAgent },
+  server: {
+    build: {
+      openAPIDocs: true,
+      swaggerUI: true,
+    },
+  },
   storage: new MastraCompositeStore({
     id: 'composite-storage',
     default: new LibSQLStore({
@@ -40,6 +46,10 @@ export const mastra = new Mastra({
         spanOutputProcessors: [
           new SensitiveDataFilter(), // Redacts sensitive data like passwords, tokens, keys
         ],
+        logging: {
+          enabled: true,
+          level: 'info', // default is 'warn', so info-level logs are dropped unless raised
+        },
       },
     },
   }),

@@ -1,7 +1,9 @@
 {
   "name": "bussiness ops",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/index.ts",
+    "studio": "mastra dev",
+    "start": "bun run dev & bun run studio & wait"
   },
   "dependencies": {
     "@chat-adapter/slack": "^4.43.0",

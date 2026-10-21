@@ -7,3 +7,6 @@ mastra.db-shm
 mastra.db-wal
 mastra.duckdb
 mastra.duckdb.wal
+
+# mastra dev/build output
+.mastra/
