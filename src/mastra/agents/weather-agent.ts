@@ -1,6 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { weatherTool } from "../tools/weather-tool";
+import { searchTool } from "@mastra/core/workspace";
 
 export const weatherAgent = new Agent({
   id: "weather-agent",
@@ -18,6 +19,6 @@ Your primary function is to help users get weather details for specific location
 
 Use the weatherTool to fetch current weather data.`,
   model: "ollama-cloud/minimax-m3.1-flash",
-  tools: { weatherTool },
+  tools: { weatherTool, searchTool },
   memory: new Memory(),
 });

@@ -2,8 +2,8 @@
   "name": "bussiness ops",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "studio": "mastra dev",
-    "start": "bun run dev & bun run studio & wait"
+    "start": "PORT=$MASTRA_PORT mastra dev",
+    "google:auth": "bun run scripts/google-oauth.ts"
   },
   "dependencies": {
     "@chat-adapter/slack": "^4.43.0",
@@ -17,9 +17,12 @@
     "@mastra/mcp": "^2.5.0",
     "@mastra/memory": "^1.39.0",
     "@mastra/observability": "^1.21.0",
+    "@mastra/tavily": "^1.1.3",
+    "@tavily/core": "^0.7.14",
     "hono": "^4.13.13",
+    "ioredis": "^6.0.0",
     "mastra": "^1.35.0",
-    "zod": "^4"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/bun": "latest"
