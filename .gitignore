@@ -1,2 +1,9 @@
 # deps
 node_modules/
+
+# local mastra storage artifacts
+mastra.db
+mastra.db-shm
+mastra.db-wal
+mastra.duckdb
+mastra.duckdb.wal
