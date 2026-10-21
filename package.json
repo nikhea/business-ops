@@ -4,8 +4,16 @@
     "dev": "bun run --hot src/index.ts"
   },
   "dependencies": {
+    "@mastra/core": "^1.79.0",
+    "@mastra/duckdb": "^1.15.0",
     "@mastra/hono": "^1.7.21",
-    "hono": "^4.13.13"
+    "@mastra/libsql": "^1.27.0",
+    "@mastra/loggers": "^1.3.9",
+    "@mastra/memory": "^1.39.0",
+    "@mastra/observability": "^1.21.0",
+    "hono": "^4.13.13",
+    "mastra": "^1.35.0",
+    "zod": "^4"
   },
   "devDependencies": {
     "@types/bun": "latest"
