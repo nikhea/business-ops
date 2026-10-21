@@ -4,7 +4,7 @@ A Mastra server for business operations. It exposes provider tools over HTTP and
 serves an OpenAPI spec plus Swagger UI.
 
 The project currently includes tool groups for Google Workspace, Airtable,
-ClickUp, Notion, and Resend.
+ClickUp, Notion, Resend, and HubSpot.
 
 ## Requirements
 
@@ -53,6 +53,11 @@ NOTION_API_TOKEN=
 
 # Resend
 RESEND_API_KEY=
+
+# HubSpot
+HUBSPOT_ACCESS_TOKEN=
+# Optional; inferred automatically for pat-eu tokens
+# HUBSPOT_BASE_URL=https://api-eu1.hubapi.com
 ```
 
 `.env` contains secrets. Keep it out of commits.
@@ -121,6 +126,7 @@ Tools are defined in `src/mastra/tools/` and registered in
 | ClickUp | 34 | Workspace hierarchy, tasks, comments, time, custom fields, webhooks, checklists |
 | Notion | 31 | Users, search, blocks, pages, databases, data sources, comments, Markdown |
 | Resend | 50 | Emails, domains, contacts, segments, broadcasts, templates, webhooks, topics |
+| HubSpot | 94 | Contacts, companies, deals, tickets, leads, quotes, orders, invoices, line items, custom objects, owners, pipelines, properties, associations, lists, conversations, forms, marketing events |
 
 ### Resend
 
@@ -159,6 +165,28 @@ await resend.emails.send({
 });
 ```
 
+### HubSpot
+
+HubSpot tools use the CRM and marketing APIs with a private app access token.
+Set `HUBSPOT_ACCESS_TOKEN` to a token from
+**Development → Legacy apps → your private app**.
+
+The API host is inferred from the token prefix. Tokens starting with `pat-eu`
+use `https://api-eu1.hubapi.com`; set `HUBSPOT_BASE_URL` to override it.
+
+The current tool set covers:
+
+- CRM objects: contacts, companies, deals, tickets, leads, quotes, orders,
+  invoices, and line items
+- Custom objects and object schemas
+- Owners, pipelines, properties, and associations
+- Lists and list memberships
+- Conversations, forms, and marketing events
+
+The private app needs read/write scopes for the objects you want to use. If
+HubSpot returns `403 MISSING_SCOPES` for an object that is already enabled in
+the app, rotate the private app token so the new scopes take effect.
+
 ### Per-request credentials
 
 Every provider supports a Request Context override instead of environment
@@ -171,6 +199,7 @@ credentials. This is useful for multi-tenant deployments:
 | ClickUp | `clickupAccessToken`, `clickupToken` |
 | Notion | `notionAccessToken`, `notionToken` |
 | Resend | `resendApiKey`, `resendToken` |
+| HubSpot | `hubspotAccessToken`, `hubspotToken` |
 
 ## Project Layout
 
@@ -188,6 +217,7 @@ src/
       clickup/             ClickUp tools
       notion/              Notion tools
       resend/              Resend tools
+      hubspot/             HubSpot tools
 tests/                     Vitest tests and fetch mocks
 scripts/google-oauth.ts    Google OAuth helper CLI
 ```

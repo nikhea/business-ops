@@ -36,6 +36,27 @@ import { notionMarkdownTools } from "./tools/notion/notion-markdown";
 import { notionDatabaseTools } from "./tools/notion/notion-databases";
 import { notionDataSourceTools } from "./tools/notion/notion-data-sources";
 import { notionCommentTools } from "./tools/notion/notion-comments";
+import {
+  hubspotContactTools,
+  hubspotCompanyTools,
+  hubspotDealTools,
+  hubspotTicketTools,
+  hubspotLeadTools,
+  hubspotQuoteTools,
+  hubspotOrderTools,
+  hubspotInvoiceTools,
+  hubspotLineItemTools,
+} from "./tools/hubspot/hubspot-objects";
+import { hubspotCustomObjectTools } from "./tools/hubspot/hubspot-custom-objects";
+import { hubspotOwnerTools } from "./tools/hubspot/hubspot-owners";
+import { hubspotPipelineTools } from "./tools/hubspot/hubspot-pipelines";
+import { hubspotPropertyTools } from "./tools/hubspot/hubspot-properties";
+import { hubspotAssociationTools } from "./tools/hubspot/hubspot-associations";
+import { hubspotListTools } from "./tools/hubspot/hubspot-lists";
+import { hubspotConversationTools } from "./tools/hubspot/hubspot-conversations";
+import { hubspotFormTools } from "./tools/hubspot/hubspot-forms";
+import { hubspotMarketingEventTools } from "./tools/hubspot/hubspot-marketing-events";
+import { hubspotSchemaTools } from "./tools/hubspot/hubspot-schemas";
 import { resendEmailTools } from "./tools/resend/resend-emails";
 import { resendDomainTools } from "./tools/resend/resend-domains";
 import { resendContactTools } from "./tools/resend/resend-contacts";
@@ -74,6 +95,25 @@ export const mastra = new Mastra({
     ...notionDatabaseTools,
     ...notionDataSourceTools,
     ...notionCommentTools,
+    ...hubspotContactTools,
+    ...hubspotCompanyTools,
+    ...hubspotDealTools,
+    ...hubspotTicketTools,
+    ...hubspotLeadTools,
+    ...hubspotQuoteTools,
+    ...hubspotOrderTools,
+    ...hubspotInvoiceTools,
+    ...hubspotLineItemTools,
+    ...hubspotCustomObjectTools,
+    ...hubspotOwnerTools,
+    ...hubspotPipelineTools,
+    ...hubspotPropertyTools,
+    ...hubspotAssociationTools,
+    ...hubspotListTools,
+    ...hubspotConversationTools,
+    ...hubspotFormTools,
+    ...hubspotMarketingEventTools,
+    ...hubspotSchemaTools,
     ...resendEmailTools,
     ...resendDomainTools,
     ...resendContactTools,

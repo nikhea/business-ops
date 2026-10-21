@@ -23,3 +23,7 @@ delete process.env.NOTION_API_KEY;
 delete process.env.NOTION_VERSION;
 delete process.env.RESEND_API_KEY;
 delete process.env.RESEND_TOKEN;
+delete process.env.HUBSPOT_ACCESS_TOKEN;
+delete process.env.HUBSPOT_TOKEN;
+delete process.env.HUBSPOT_PRIVATE_APP_TOKEN;
+delete process.env.HUBSPOT_BASE_URL;
