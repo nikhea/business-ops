@@ -130,6 +130,17 @@ export function validateEnv(): void {
     );
   }
 
+  // Separate secret: Studio JWTs must not be signed with the auth or
+  // credential-encryption keys.
+  const studioSecret = readEnv("MASTRA_JWT_SECRET");
+  if (!studioSecret) {
+    errors.push("MASTRA_JWT_SECRET is required for Studio. Generate one with: openssl rand -base64 32");
+  } else if (studioSecret.length < MIN_SECRET_LENGTH) {
+    errors.push(
+      `MASTRA_JWT_SECRET must be at least ${MIN_SECRET_LENGTH} characters (got ${studioSecret.length}).`,
+    );
+  }
+
   validateEncryptionKey(errors);
 
   if (errors.length > 0) {

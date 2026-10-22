@@ -3,7 +3,8 @@ import { PinoLogger } from "@mastra/loggers";
 import { PostgresStore } from "@mastra/pg";
 import { DuckDBStore } from "@mastra/duckdb";
 import { MastraCompositeStore } from "@mastra/core/storage";
-import { databaseUrl, readEnv } from "../config/env";
+import { databaseUrl, betterAuthUrl, readEnv } from "../config/env";
+import { getStudioAuth } from "../auth/studio";
 import {
   Observability,
   MastraStorageExporter,
@@ -69,6 +70,10 @@ import { resendTopicTools } from "./tools/resend/resend-topics";
 import { mastraAuth } from "../auth/mastra-auth";
 import { sessionContext } from "../auth/session-context";
 
+// Studio runs from this server at /studio, and its API calls go back to the
+// same origin, so derive the advertised URL from the public auth URL.
+const studioOrigin = new URL(betterAuthUrl());
+
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
   agents: { weatherAgent },
@@ -129,12 +134,22 @@ export const mastra = new Mastra({
   server: {
     port: 5000,
     host: "0.0.0.0",
+    studioHost: studioOrigin.hostname,
+    studioProtocol: studioOrigin.protocol.replace(":", "") as "http" | "https",
+    studioPort: Number(
+      studioOrigin.port || (studioOrigin.protocol === "https:" ? 443 : 80),
+    ),
+    studioBase: "/studio",
     auth: mastraAuth,
     middleware: [{ path: "*", handler: sessionContext }],
     build: {
       openAPIDocs: true,
       swaggerUI: true,
     },
+  },
+  // Studio uses short-lived JWTs; API clients keep using server.auth above.
+  studio: {
+    auth: getStudioAuth(),
   },
   storage: new MastraCompositeStore({
     id: "composite-storage",

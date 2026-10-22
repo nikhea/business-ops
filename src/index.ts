@@ -14,6 +14,7 @@ import { mastra } from "./mastra/index";
 import { adminRoutes } from "./routes/admin";
 import { googleOAuthRoutes } from "./routes/google";
 import { pageRoutes } from "./routes/pages";
+import { registerStudioRoutes } from "./routes/studio";
 
 // Fail fast on broken configuration instead of serving broken links.
 validateEnv();
@@ -63,6 +64,7 @@ app.use("/swagger-ui/*", requireAuth);
 
 app.route("/admin", adminRoutes);
 app.route("/", pageRoutes);
+registerStudioRoutes(app);
 
 const server = new MastraServer({ app, mastra, openapiPath: "/openapi.json" });
 await server.init();
@@ -75,6 +77,7 @@ app.get("/", (c) => {
     status: "ok",
     auth: "/auth/ok",
     signIn: "/signin",
+    studio: "/studio",
     openapi: "/api/openapi.json",
   });
 });
@@ -104,6 +107,7 @@ if (Number(configured.port || (configured.protocol === "https:" ? 443 : 80)) !==
 serve({ fetch: app.fetch, port }, () => {
   console.log(`Server running on port ${port}`);
   console.log(`Sign in:      http://localhost:${port}/signin`);
+  console.log(`Studio:       http://localhost:${port}/studio`);
   console.log(`Auth:         http://localhost:${port}/auth/ok`);
   console.log(`OpenAPI spec: http://localhost:${port}${openapiUrl}`);
   console.log(`Swagger UI:   http://localhost:${port}/swagger-ui`);

@@ -1,32 +1,16 @@
 /**
- * Principal resolution: cookie session first, then API key.
+ * Principal resolution: cookie session first, then a bearer token.
  *
- * Results are cached per request (WeakMap) so the Hono guard, the Mastra auth
- * provider, and the request-context middleware share one lookup.
+ * Bearer tokens can be a Studio JWT or an API key; Studio is tried first and
+ * API keys second. Results are cached per request (WeakMap) so the Hono guard,
+ * the Mastra auth provider, and the request-context middleware share one lookup.
  */
 
-import { eq } from "drizzle-orm";
-import { getDb } from "../db";
-import { user as userTable } from "../db/schema/auth";
 import { auth, type Principal } from "./index";
+import { resolveStudioToken } from "./studio";
+import { loadUser, toPrincipal } from "./users";
 
 const sessionCache = new WeakMap<Request, Promise<Principal | null>>();
-
-function toPrincipal(row: {
-  id: string;
-  email: string;
-  name: string;
-  role?: string | null;
-  image?: string | null;
-}): Principal {
-  return {
-    id: row.id,
-    email: row.email,
-    name: row.name,
-    role: row.role ?? "user",
-    image: row.image ?? null,
-  };
-}
 
 /** Reads a Bearer token or `?apiKey=` from the request. */
 export function readApiKey(request: Request): string | null {
@@ -58,16 +42,6 @@ export async function resolveSessionPrincipal(request: Request): Promise<Princip
   return pending;
 }
 
-async function loadUser(userId: string): Promise<Principal | null> {
-  const rows = await getDb()
-    .select()
-    .from(userTable)
-    .where(eq(userTable.id, userId))
-    .limit(1);
-
-  return rows[0] ? toPrincipal(rows[0]) : null;
-}
-
 export async function resolveApiKeyPrincipal(key: string): Promise<Principal | null> {
   // No caching: verifyApiKey also enforces enabled/revoked state and rate
   // limits, so a revoked key must stop working on the very next request.
@@ -84,8 +58,15 @@ export async function resolvePrincipal(request: Request): Promise<Principal | nu
   const session = await resolveSessionPrincipal(request);
   if (session) return session;
 
-  const key = readApiKey(request);
-  return key ? resolveApiKeyPrincipal(key) : null;
+  const token = readApiKey(request);
+  if (!token) return null;
+
+  // A Studio JWT is also accepted on API routes, so the browser can call the
+  // same endpoints with the header Studio already sends.
+  const fromStudio = await resolveStudioToken(token);
+  if (fromStudio) return fromStudio;
+
+  return resolveApiKeyPrincipal(token);
 }
 
 export function isAdmin(principal: Principal): boolean {

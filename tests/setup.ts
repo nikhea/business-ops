@@ -14,6 +14,7 @@ process.env.GOOGLE_DEFAULT_CALENDAR_ID = "primary";
 process.env.DATABASE_URL = "postgres://test:test@127.0.0.1:1/business_ops_test";
 process.env.BETTER_AUTH_URL = "http://localhost:5000";
 process.env.BETTER_AUTH_SECRET = "test-secret-that-is-long-enough-32+";
+process.env.MASTRA_JWT_SECRET = "test-studio-jwt-secret-that-is-long-enough";
 process.env.CREDENTIAL_ENCRYPTION_KEY = "dGVzdC1rZXktZm9yLXVuaXQtdGVzdHMtMzJieXRlcyE=";
 process.env.RESEND_API_KEY = "";
 

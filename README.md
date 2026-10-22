@@ -34,6 +34,7 @@ DATABASE_URL=postgres://user:password@localhost:5432/business_ops
 BETTER_AUTH_URL=http://localhost:5000
 BETTER_AUTH_SECRET=            # openssl rand -base64 32
 CREDENTIAL_ENCRYPTION_KEY=     # openssl rand -base64 32 (keep separate from the auth secret)
+MASTRA_JWT_SECRET=             # openssl rand -base64 32; signs Studio tokens
 # Optional sender for invite and password-reset emails
 # AUTH_EMAIL_FROM="Business Ops <ops@your-domain.com>"
 
@@ -129,6 +130,7 @@ password. There is no self-signup: an admin creates each account.
 - Sessions: HTTP-only cookies, 7 days, refreshed daily.
 - API keys: `Authorization: Bearer ops_...` (or `?apiKey=`), created through
   Better Auth's API key endpoints.
+- Studio: short-lived JWTs minted from a browser session; see below.
 - Scoping: Mastra memory and threads are keyed by `user:<id>` from the session,
   so one user cannot read another user's threads.
 
@@ -138,6 +140,7 @@ password. There is no self-signup: an admin creates each account.
 | --- | --- |
 | `/signin` | Sign-in form |
 | `/accept-invite` | Set a password from an invite link |
+| `/studio` | Mastra Studio (session required, served by this app) |
 | `/auth/*` | Better Auth (`/auth/ok`, `/auth/sign-in/email`, `/auth/sign-out`, `/auth/api-key/*`, ...) |
 | `/me` | Current principal |
 | `/admin/users` | List users (admin) |
@@ -151,6 +154,28 @@ password. There is no self-signup: an admin creates each account.
 
 Better Auth is mounted at `/auth`, not `/api/auth`, because Mastra already owns
 `/api/auth/*` (`capabilities`, `me`, `logout`, `refresh`, `sso`).
+
+### Mastra Studio
+
+Open `http://localhost:5000/studio` after signing in. Studio is served by this
+app from the prebuilt assets in the `mastra` package and is pointed at
+`http://localhost:5000` (from `BETTER_AUTH_URL`), not the default port 4111.
+
+Studio uses a separate auth provider (`studio.auth`). Loading `/studio` mints a
+12-hour JWT from your Better Auth session and hands it to the SPA through the
+`auth_header` query parameter; Studio keeps it in memory and sends it as
+`Authorization: Bearer <jwt>` on every API call, along with
+`x-mastra-client-type: studio`.
+
+That separation means:
+
+- A browser session alone cannot reach Studio routes (401).
+- An API key alone cannot open Studio.
+- The JWT also works on normal `/api/*` routes, so scripts can reuse it.
+
+`MASTRA_JWT_SECRET` signs these tokens; rotating it invalidates every Studio
+session immediately. Set `MASTRA_STUDIO_PATH` if the assets live somewhere other
+than `node_modules/mastra/dist/studio`.
 
 ### Inviting a user
 
@@ -190,14 +215,16 @@ The server starts on `http://localhost:5000` by default. Set `BETTER_AUTH_URL`
 to the same origin, otherwise cookies and invite links point at the wrong host.
 
 - Sign in: `http://localhost:5000/signin`
+- Studio: `http://localhost:5000/studio` (redirects to sign-in when signed out)
 - Swagger UI: `http://localhost:5000/swagger-ui`
 - OpenAPI spec: `http://localhost:5000/api/openapi.json`
 
-`/api/*`, `/admin/*`, `/google/*`, and `/swagger-ui/*` require a session or API
-key. Use `PORT` to change the port.
+`/api/*`, `/admin/*`, `/google/*`, and `/swagger-ui/*` require a session, a
+Studio JWT, or an API key. Use `PORT` to change the port.
 
 Use `bun run dev` for the full server. `bun run start` boots only Mastra's own
-server (`mastra dev`) and does not mount `/auth/*`, `/admin/*`, or `/signin`.
+server (`mastra dev`) and does not mount `/auth/*`, `/admin/*`, `/signin`, or
+`/studio`.
 
 
 ## Testing
