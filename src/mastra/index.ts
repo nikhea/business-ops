@@ -1,8 +1,7 @@
 import { Mastra } from "@mastra/core/mastra";
 import { PinoLogger } from "@mastra/loggers";
-import { LibSQLStore } from "@mastra/libsql";
-import { DuckDBStore } from "@mastra/duckdb";
-import { MastraCompositeStore } from "@mastra/core/storage";
+import { PostgresStore } from "@mastra/pg";
+import { databaseUrl } from "../config/env";
 import {
   Observability,
   MastraStorageExporter,
@@ -135,18 +134,9 @@ export const mastra = new Mastra({
       swaggerUI: true,
     },
   },
-  storage: new MastraCompositeStore({
-    id: "composite-storage",
-    default: new LibSQLStore({
-      id: "mastra-storage",
-      // Uses a hosted database when deployed (mastra env db create --kind turso),
-      // and a local file during development.
-      url: process.env.TURSO_DATABASE_URL ?? "file:./mastra.db",
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    }),
-    domains: {
-      observability: await new DuckDBStore().getStore("observability"),
-    },
+  storage: new PostgresStore({
+    id: "pg-storage",
+    connectionString: databaseUrl(),
   }),
   logger: new PinoLogger({
     name: "Mastra",

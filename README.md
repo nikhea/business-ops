@@ -327,16 +327,15 @@ scripts/google-oauth.ts    Google OAuth helper CLI
 
 ## Storage
 
-Postgres stores auth data (`user`, `session`, `account`, `verification`,
-`apikey`), provider credentials, and connected Google accounts. Apply migrations
-with `bun run db:migrate`.
+Everything persistent lives in Postgres (`DATABASE_URL`):
 
-Mastra's own data uses local SQLite (`mastra.db`) and DuckDB files by default. To
-use a hosted Turso database, set:
+- Auth: `user`, `session`, `account`, `verification`, `apikey`
+- App: `provider_credential`, `google_account`, `oauth_state`
+- Mastra: `mastra_*` tables for memory threads, messages, workflow snapshots,
+  agents, and observability spans
 
-```dotenv
-TURSO_DATABASE_URL=
-TURSO_AUTH_TOKEN=
-```
+Apply app migrations with `bun run db:migrate`. Mastra creates and migrates its
+own `mastra_*` tables on startup.
 
-Local database files and `.mastra/` build output are ignored by Git.
+No Redis, SQLite, or DuckDB files are used. `.mastra/` build output is ignored by
+Git.
