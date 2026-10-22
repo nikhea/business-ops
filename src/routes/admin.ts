@@ -1,7 +1,7 @@
 /**
  * Admin API: user provisioning and provider credentials.
  *
- * Every route here is guarded by `requireAdmin`.
+ * Every route here is guarded by `requireAdminSession`.
  */
 
 import { randomBytes } from "node:crypto";
@@ -9,7 +9,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { betterAuthUrl } from "../config/env";
 import { auth } from "../auth";
-import { requireAdmin } from "../auth/guards";
+import { requireAdminSession } from "../auth/guards";
 import { encryptSecret } from "../db/crypto";
 import { getDb } from "../db";
 import { providerCredential } from "../db/schema/app";
@@ -23,7 +23,7 @@ function isProvider(value: string): value is ProviderName {
 
 export const adminRoutes = new Hono();
 
-adminRoutes.use("*", requireAdmin);
+adminRoutes.use("*", requireAdminSession);
 
 adminRoutes.get("/users", async (c) => {
   const limit = Math.min(Number(c.req.query("limit") ?? 100), 500);

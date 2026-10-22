@@ -8,7 +8,7 @@ import {
   MastraServer,
 } from "@mastra/hono";
 import { auth } from "./auth";
-import { requireAdmin, requireAuth } from "./auth/guards";
+import { requireAdmin, requireAdminSession, requireAuth } from "./auth/guards";
 import { betterAuthUrl, validateEnv } from "./config/env";
 import { mastra } from "./mastra/index";
 import { adminRoutes } from "./routes/admin";
@@ -50,8 +50,8 @@ app.all("/auth/*", (c) => auth.handler(c.req.raw));
 // handlers in registration order.
 app.use("/api", requireAuth);
 app.use("/api/*", requireAuth);
-app.use("/admin", requireAuth);
-app.use("/admin/*", requireAuth);
+app.use("/admin", requireAdminSession);
+app.use("/admin/*", requireAdminSession);
 
 // Connecting a company-wide Google Workspace account is an admin action.
 app.use("/google", requireAuth);

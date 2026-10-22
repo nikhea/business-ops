@@ -10,15 +10,7 @@ import { getDb } from "../db";
 import { user as userTable } from "../db/schema/auth";
 import { auth, type Principal } from "./index";
 
-const REQUEST_CACHE_TTL_MS = 30_000;
-
-interface CacheEntry {
-  principal: Principal | null;
-  expiresAt: number;
-}
-
 const sessionCache = new WeakMap<Request, Promise<Principal | null>>();
-const apiKeyCache = new Map<string, CacheEntry>();
 
 function toPrincipal(row: {
   id: string;
@@ -77,20 +69,15 @@ async function loadUser(userId: string): Promise<Principal | null> {
 }
 
 export async function resolveApiKeyPrincipal(key: string): Promise<Principal | null> {
-  const cached = apiKeyCache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return cached.principal;
-
-  let principal: Principal | null = null;
+  // No caching: verifyApiKey also enforces enabled/revoked state and rate
+  // limits, so a revoked key must stop working on the very next request.
   try {
     const result = await auth.api.verifyApiKey({ body: { key } });
     const referenceId = result.valid ? result.key?.referenceId : undefined;
-    if (referenceId) principal = await loadUser(referenceId);
+    return referenceId ? loadUser(referenceId) : null;
   } catch {
-    principal = null;
+    return null;
   }
-
-  apiKeyCache.set(key, { principal, expiresAt: Date.now() + REQUEST_CACHE_TTL_MS });
-  return principal;
 }
 
 export async function resolvePrincipal(request: Request): Promise<Principal | null> {
