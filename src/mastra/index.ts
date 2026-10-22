@@ -1,7 +1,9 @@
 import { Mastra } from "@mastra/core/mastra";
 import { PinoLogger } from "@mastra/loggers";
 import { PostgresStore } from "@mastra/pg";
-import { databaseUrl } from "../config/env";
+import { DuckDBStore } from "@mastra/duckdb";
+import { MastraCompositeStore } from "@mastra/core/storage";
+import { databaseUrl, readEnv } from "../config/env";
 import {
   Observability,
   MastraStorageExporter,
@@ -134,9 +136,20 @@ export const mastra = new Mastra({
       swaggerUI: true,
     },
   },
-  storage: new PostgresStore({
-    id: "pg-storage",
-    connectionString: databaseUrl(),
+  storage: new MastraCompositeStore({
+    id: "composite-storage",
+    // Memory, workflows, agents, and scores live in Postgres.
+    default: new PostgresStore({
+      id: "pg-storage",
+      connectionString: databaseUrl(),
+    }),
+    // Traces, logs, metrics, and feedback go to an embedded analytical store.
+    domains: {
+      observability: new DuckDBStore({
+        id: "duckdb-observability",
+        path: readEnv("MASTRA_DUCKDB_PATH") ?? "mastra.duckdb",
+      }).observability,
+    },
   }),
   logger: new PinoLogger({
     name: "Mastra",

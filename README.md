@@ -27,6 +27,8 @@ NODE_ENV=development
 
 # PostgreSQL: use a dedicated database, not one shared with another app
 DATABASE_URL=postgres://user:password@localhost:5432/business_ops
+# Optional: where the embedded observability store lives (default mastra.duckdb)
+# MASTRA_DUCKDB_PATH=mastra.duckdb
 
 # Auth
 BETTER_AUTH_URL=http://localhost:5000
@@ -327,15 +329,21 @@ scripts/google-oauth.ts    Google OAuth helper CLI
 
 ## Storage
 
-Everything persistent lives in Postgres (`DATABASE_URL`):
+Postgres (`DATABASE_URL`) holds everything except observability:
 
 - Auth: `user`, `session`, `account`, `verification`, `apikey`
 - App: `provider_credential`, `google_account`, `oauth_state`
 - Mastra: `mastra_*` tables for memory threads, messages, workflow snapshots,
-  agents, and observability spans
+  and agents
+
+Observability (traces, logs, metrics, scores, feedback) goes to an embedded
+DuckDB file, `mastra.duckdb`, through a composite store. Override the path with
+`MASTRA_DUCKDB_PATH`. DuckDB implements only the observability domain, so the
+Postgres store remains the default for everything else.
 
 Apply app migrations with `bun run db:migrate`. Mastra creates and migrates its
-own `mastra_*` tables on startup.
+own `mastra_*` tables on startup. DuckDB is intended for local development; use
+ClickHouse or another analytical backend for production traces.
 
-No Redis, SQLite, or DuckDB files are used. `.mastra/` build output is ignored by
-Git.
+No Redis or SQLite files are used. `mastra.duckdb*` and `.mastra/` build output
+are ignored by Git.
