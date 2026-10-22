@@ -8,10 +8,10 @@
  * Usage:
  *   bun run google:auth              # print the consent URL
  *   bun run google:auth -- --force   # print the URL with consent forced (new refresh token)
- *   bun run google:auth -- --list    # list accounts already stored in Redis
+ *   bun run google:auth -- --list    # list accounts already stored in Postgres
  */
 
-import { closeRedisClient, getDefaultGoogleAccount, listGoogleAccounts } from "../src/mastra/tools/google/google-redis";
+import { closeGoogleStore, getDefaultGoogleAccount, listGoogleAccounts } from "../src/mastra/tools/google/google-store";
 
 const args = process.argv.slice(2);
 const baseUrl =
@@ -31,7 +31,7 @@ if (args.includes("--list")) {
     const [accounts, defaultAccount] = await Promise.all([listGoogleAccounts(), getDefaultGoogleAccount()]);
 
     if (accounts.length === 0) {
-      console.log("No Google accounts are stored in Redis yet.");
+      console.log("No Google accounts are stored in Postgres yet.");
     } else {
       console.log(`Connected Google accounts (${accounts.length}):`);
       for (const account of accounts) {
@@ -41,14 +41,14 @@ if (args.includes("--list")) {
       }
     }
   } catch (error) {
-    console.error("Could not read Redis:", error instanceof Error ? error.message : error);
+    console.error("Could not read Postgres:", error instanceof Error ? error.message : error);
     process.exitCode = 1;
   } finally {
-    await closeRedisClient();
+    await closeGoogleStore();
   }
 } else {
   console.log("Start the app first:  bun run dev");
   console.log("Then open:            " + connectUrl.toString());
-  console.log("\nGoogle redirects back to GOOGLE_REDIRECT_URI and the account is saved in Redis.");
+  console.log("\nGoogle redirects back to GOOGLE_REDIRECT_URI and the account is saved in Postgres.");
   console.log("Use --list to inspect stored accounts or --force to force a new consent.");
 }

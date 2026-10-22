@@ -1,11 +1,11 @@
 /**
- * In-memory stand-in for `src/mastra/tools/google/google-redis.ts`.
+ * In-memory stand-in for `src/mastra/tools/google/google-store.ts`.
  *
  * Test files mock the real module with this one so auth and routes never
- * connect to Redis.
+ * touch Postgres.
  */
 
-import type { GoogleAccountRecord } from "../../src/mastra/tools/google/google-redis";
+import type { GoogleAccountRecord } from "../../src/mastra/tools/google/google-store";
 
 export const accounts = new Map<string, GoogleAccountRecord>();
 export const oauthStates = new Set<string>();
@@ -81,14 +81,6 @@ export async function consumeOAuthState(state: string): Promise<boolean> {
   return oauthStates.delete(state);
 }
 
-export async function redisPing(): Promise<boolean> {
-  return true;
-}
-
-export function getRedisClient(): never {
-  throw new Error("Redis is not available in tests.");
-}
-
-export async function closeRedisClient(): Promise<void> {
+export async function closeGoogleStore(): Promise<void> {
   // no-op
 }

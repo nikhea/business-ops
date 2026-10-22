@@ -1,6 +1,11 @@
 # deps
 node_modules/
 
+# secrets
+.env
+.env.*
+!.env.example
+
 # local mastra storage artifacts
 mastra.db
 mastra.db-shm
@@ -10,3 +15,7 @@ mastra.duckdb.wal
 
 # mastra dev/build output
 .mastra/
+
+# logs and editor noise
+*.log
+.DS_Store

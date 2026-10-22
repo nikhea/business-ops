@@ -9,7 +9,7 @@ ClickUp, Notion, Resend, and HubSpot.
 ## Requirements
 
 - [Bun](https://bun.sh/) 1.2 or newer
-- A Redis connection for Google account storage and OAuth state
+- PostgreSQL 14 or newer (auth, API keys, and provider credentials)
 - API credentials for the providers you want to use
 
 ## Setup
@@ -23,6 +23,17 @@ Create a `.env` file in the project root. Only configure the providers you need:
 ```dotenv
 # Server
 PORT=5000
+NODE_ENV=development
+
+# PostgreSQL: use a dedicated database, not one shared with another app
+DATABASE_URL=postgres://user:password@localhost:5432/business_ops
+
+# Auth
+BETTER_AUTH_URL=http://localhost:5000
+BETTER_AUTH_SECRET=            # openssl rand -base64 32
+CREDENTIAL_ENCRYPTION_KEY=     # openssl rand -base64 32 (keep separate from the auth secret)
+# Optional sender for invite and password-reset emails
+# AUTH_EMAIL_FROM="Business Ops <ops@your-domain.com>"
 
 # Google Workspace
 GOOGLE_CLIENT_ID=
@@ -36,9 +47,6 @@ GOOGLE_REDIRECT_URI=http://localhost:5000/google/callback
 # Optional static token fallback instead of the OAuth flow
 # GOOGLE_ACCESS_TOKEN=
 # GOOGLE_REFRESH_TOKEN=
-
-# Redis (required for the Google OAuth flow)
-REDIS_URL=redis://localhost:6379
 
 # Airtable
 AIRTABLE_PAT=
@@ -60,7 +68,23 @@ HUBSPOT_ACCESS_TOKEN=
 # HUBSPOT_BASE_URL=https://api-eu1.hubapi.com
 ```
 
-`.env` contains secrets. Keep it out of commits.
+`.env` contains secrets. It is ignored by Git; never commit it.
+
+### Database
+
+Generate and apply migrations, then create the first admin:
+
+```sh
+bun run db:generate      # after changing src/db/schema/*
+bun run db:migrate
+bun run admin:create -- --email you@example.com --name "Your Name" --password '...'
+```
+
+`DATABASE_URL` must include a database name and should point at a database
+dedicated to this app. Better Auth owns the `user`, `session`, `account`,
+`verification`, and `apikey` tables; the app adds `provider_credential`,
+`google_account`, and `oauth_state`.
+
 
 ### Google OAuth
 
@@ -89,7 +113,70 @@ bun run google:auth -- --list           # list connected accounts
 bun run google:auth -- --email you@example.com
 ```
 
-Connected Google accounts are stored in Redis and refreshed automatically.
+Connected Google accounts and their refresh tokens are stored in Postgres,
+encrypted with `CREDENTIAL_ENCRYPTION_KEY`, and refreshed automatically.
+
+The `/google/connect` and `/google/accounts` routes require an admin session or
+an admin API key.
+
+## Authentication
+
+The server uses [Better Auth](https://www.better-auth.com/) with email and
+password. There is no self-signup: an admin creates each account.
+
+- Sessions: HTTP-only cookies, 7 days, refreshed daily.
+- API keys: `Authorization: Bearer ops_...` (or `?apiKey=`), created through
+  Better Auth's API key endpoints.
+- Scoping: Mastra memory and threads are keyed by `user:<id>` from the session,
+  so one user cannot read another user's threads.
+
+### Pages and endpoints
+
+| Path | Purpose |
+| --- | --- |
+| `/signin` | Sign-in form |
+| `/accept-invite` | Set a password from an invite link |
+| `/auth/*` | Better Auth (`/auth/ok`, `/auth/sign-in/email`, `/auth/sign-out`, `/auth/api-key/*`, ...) |
+| `/me` | Current principal |
+| `/admin/users` | List users (admin) |
+| `/admin/users/invite` | Create a user and email a password link (admin) |
+| `/admin/users/:id/resend-invite` | Send a new password link (admin) |
+| `/admin/users/:id/role` | Change role (admin) |
+| `/admin/users/:id/ban` | Ban a user (admin) |
+| `/admin/users/:id/unban` | Unban a user (admin) |
+| `/admin/credentials` | List configured providers, never the values (admin) |
+| `/admin/credentials/:provider` | Store or delete a provider token (admin) |
+
+Better Auth is mounted at `/auth`, not `/api/auth`, because Mastra already owns
+`/api/auth/*` (`capabilities`, `me`, `logout`, `refresh`, `sso`).
+
+### Inviting a user
+
+```sh
+curl -X POST http://localhost:5000/admin/users/invite \
+  -H 'content-type: application/json' \
+  -H 'cookie: <admin session cookie>' \
+  -d '{"email":"teammate@example.com","name":"Teammate","role":"user"}'
+```
+
+The account is created with a random password, then a password-reset link is
+emailed. When `RESEND_API_KEY` is unset in development, the link is printed to
+the server log instead.
+
+### Provider credentials
+
+Admins can move provider tokens out of `.env` and into Postgres:
+
+```sh
+curl -X PUT http://localhost:5000/admin/credentials/notion \
+  -H 'content-type: application/json' \
+  -H 'cookie: <admin session cookie>' \
+  -d '{"token":"secret_..."}'
+```
+
+Supported providers: `airtable`, `clickup`, `notion`, `resend`, `hubspot`.
+Values are encrypted with AES-256-GCM. A database value wins over the matching
+environment variable; the tools fall back to `.env` when no row exists.
 
 ## Running
 
@@ -97,12 +184,19 @@ Connected Google accounts are stored in Redis and refreshed automatically.
 bun run dev
 ```
 
-The server starts on `http://localhost:5000` by default.
+The server starts on `http://localhost:5000` by default. Set `BETTER_AUTH_URL`
+to the same origin, otherwise cookies and invite links point at the wrong host.
 
+- Sign in: `http://localhost:5000/signin`
 - Swagger UI: `http://localhost:5000/swagger-ui`
 - OpenAPI spec: `http://localhost:5000/api/openapi.json`
 
-Use `PORT` to change the port.
+`/api/*`, `/admin/*`, `/google/*`, and `/swagger-ui/*` require a session or API
+key. Use `PORT` to change the port.
+
+Use `bun run dev` for the full server. `bun run start` boots only Mastra's own
+server (`mastra dev`) and does not mount `/auth/*`, `/admin/*`, or `/signin`.
+
 
 ## Testing
 
@@ -190,7 +284,9 @@ the app, rotate the private app token so the new scopes take effect.
 ### Per-request credentials
 
 Every provider supports a Request Context override instead of environment
-credentials. This is useful for multi-tenant deployments:
+credentials. The server populates these keys from Postgres for each
+authenticated request (see Provider credentials above); anything not stored there
+falls back to `.env`.
 
 | Provider | Context keys |
 | --- | --- |
@@ -205,8 +301,14 @@ credentials. This is useful for multi-tenant deployments:
 
 ```text
 src/
-  index.ts                 HTTP server, Swagger UI, Google OAuth routes
-  routes/google.ts         Google OAuth connect and callback
+  index.ts                 HTTP server, guards, Swagger UI, auth mount
+  auth/                    Better Auth config, principal resolution, guards
+  config/env.ts            Boot-time environment validation
+  db/                      Postgres pool, Drizzle schema, AES-256-GCM helpers
+  routes/
+    admin.ts               User provisioning and provider credentials
+    google.ts              Google OAuth connect and callback (admin only)
+    pages.ts               /signin and /accept-invite
   mastra/
     index.ts               Mastra config and tool registration
     agents/                Agents
@@ -218,14 +320,19 @@ src/
       notion/              Notion tools
       resend/              Resend tools
       hubspot/             HubSpot tools
+drizzle/                   Generated SQL migrations
 tests/                     Vitest tests and fetch mocks
 scripts/google-oauth.ts    Google OAuth helper CLI
 ```
 
 ## Storage
 
-Mastra uses local SQLite (`mastra.db`) and DuckDB files by default. To use a
-hosted Turso database, set:
+Postgres stores auth data (`user`, `session`, `account`, `verification`,
+`apikey`), provider credentials, and connected Google accounts. Apply migrations
+with `bun run db:migrate`.
+
+Mastra's own data uses local SQLite (`mastra.db`) and DuckDB files by default. To
+use a hosted Turso database, set:
 
 ```dotenv
 TURSO_DATABASE_URL=

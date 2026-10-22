@@ -1,4 +1,5 @@
-// Runs before every test file. Tests must never touch real Google APIs or Redis.
+// Runs before every test file. Tests must never touch real Google APIs, Redis,
+// or Postgres.
 process.env.NODE_ENV = "test";
 process.env.GOOGLE_CLIENT_ID = "test-client-id";
 process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
@@ -7,6 +8,14 @@ process.env.GOOGLE_OAUTH_SCOPES =
   "openid email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/spreadsheets";
 process.env.GOOGLE_CALENDAR_TIMEZONE = "UTC";
 process.env.GOOGLE_DEFAULT_CALENDAR_ID = "primary";
+
+// Auth env. Port 1 refuses immediately, so an accidental query fails fast
+// instead of hanging on a real database.
+process.env.DATABASE_URL = "postgres://test:test@127.0.0.1:1/business_ops_test";
+process.env.BETTER_AUTH_URL = "http://localhost:5000";
+process.env.BETTER_AUTH_SECRET = "test-secret-that-is-long-enough-32+";
+process.env.CREDENTIAL_ENCRYPTION_KEY = "dGVzdC1rZXktZm9yLXVuaXQtdGVzdHMtMzJieXRlcyE=";
+process.env.RESEND_API_KEY = "";
 
 delete process.env.GOOGLE_ACCESS_TOKEN;
 delete process.env.GOOGLE_REFRESH_TOKEN;

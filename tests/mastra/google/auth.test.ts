@@ -5,10 +5,10 @@ import {
   resetFakeGoogleStore,
   seedGoogleAccount,
   setDefaultGoogleAccount,
-} from "../../helpers/fake-google-redis";
+} from "../../helpers/fake-google-store";
 import { GoogleAuthError, resolveGoogleAccessToken } from "../../../src/mastra/tools/google/google-auth";
 
-vi.mock("../../../src/mastra/tools/google/google-redis", () => import("../../helpers/fake-google-redis"));
+vi.mock("../../../src/mastra/tools/google/google-store", () => import("../../helpers/fake-google-store"));
 
 const baseAccount = {
   email: "user@example.com",

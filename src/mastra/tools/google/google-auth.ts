@@ -3,10 +3,10 @@
  *
  * Auth resolution order:
  * 1. A per-request override in Mastra's Request Context (`googleAccessToken`).
- * 2. A connected account stored in Redis, chosen by `googleAccount` (or
+ * 2. A connected account stored in Postgres, chosen by `googleAccount` (or
  *    `googleEmail`) in the Request Context, otherwise the default account.
  *    Expired access tokens are refreshed with the stored refresh token and the
- *    new token is written back to Redis.
+ *    new token is written back to Postgres.
  * 3. `GOOGLE_ACCESS_TOKEN` / `GOOGLE_REFRESH_TOKEN` environment variables.
  *
  * Connect an account with `GET /google/connect`.
@@ -17,7 +17,7 @@ import {
   getGoogleAccount,
   saveGoogleAccount,
   type GoogleAccountRecord,
-} from "./google-redis";
+} from "./google-store";
 
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const TOKEN_EXPIRY_SKEW_MS = 60_000;
@@ -63,7 +63,7 @@ interface RefreshTokenResponse {
 
 const pendingRefreshes = new Map<string, Promise<TokenCacheEntry>>();
 let envToken: TokenCacheEntry | undefined;
-let loggedRedisFailure = false;
+let loggedStoreFailure = false;
 
 export async function resolveGoogleAccessToken(context?: GoogleToolContext): Promise<string> {
   const override = context?.requestContext?.get?.("googleAccessToken");
@@ -90,7 +90,7 @@ async function safeDefaultAccount(): Promise<string | undefined> {
   try {
     return await getDefaultGoogleAccount();
   } catch (error) {
-    reportRedisFailure(error);
+    reportStoreFailure(error);
     return undefined;
   }
 }
@@ -100,7 +100,7 @@ async function getStoredAccountToken(email: string): Promise<string | undefined>
   try {
     account = await getGoogleAccount(email);
   } catch (error) {
-    reportRedisFailure(error);
+    reportStoreFailure(error);
     return undefined;
   }
 
@@ -130,7 +130,7 @@ async function getStoredAccountToken(email: string): Promise<string | undefined>
       scope: token.scope ?? account.scope,
     });
   } catch (error) {
-    reportRedisFailure(error);
+    reportStoreFailure(error);
   }
 
   return token.accessToken;
@@ -212,11 +212,11 @@ async function refreshAccessToken(refreshToken: string): Promise<TokenCacheEntry
   };
 }
 
-function reportRedisFailure(error: unknown) {
-  if (loggedRedisFailure) return;
-  loggedRedisFailure = true;
+function reportStoreFailure(error: unknown) {
+  if (loggedStoreFailure) return;
+  loggedStoreFailure = true;
   console.error(
-    "[google-auth] Could not read Google credentials from Redis; falling back to environment credentials:",
+    "[google-auth] Could not read Google credentials from Postgres; falling back to environment credentials:",
     error instanceof Error ? error.message : error,
   );
 }

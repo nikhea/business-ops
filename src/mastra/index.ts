@@ -65,6 +65,8 @@ import { resendBroadcastTools } from "./tools/resend/resend-broadcasts";
 import { resendTemplateTools } from "./tools/resend/resend-templates";
 import { resendWebhookTools } from "./tools/resend/resend-webhooks";
 import { resendTopicTools } from "./tools/resend/resend-topics";
+import { mastraAuth } from "../auth/mastra-auth";
+import { sessionContext } from "../auth/session-context";
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -126,6 +128,8 @@ export const mastra = new Mastra({
   server: {
     port: 5000,
     host: "0.0.0.0",
+    auth: mastraAuth,
+    middleware: [{ path: "*", handler: sessionContext }],
     build: {
       openAPIDocs: true,
       swaggerUI: true,

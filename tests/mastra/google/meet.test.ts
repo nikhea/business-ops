@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { jsonResponse, mockGoogleFetch } from "../../helpers/http";
-import { resetFakeGoogleStore } from "../../helpers/fake-google-redis";
+import { resetFakeGoogleStore } from "../../helpers/fake-google-store";
 import { runTool } from "../../helpers/tool";
 import { meetTools } from "../../../src/mastra/tools/google/meet-rest";
 
-vi.mock("../../../src/mastra/tools/google/google-redis", () => import("../../helpers/fake-google-redis"));
+vi.mock("../../../src/mastra/tools/google/google-store", () => import("../../helpers/fake-google-store"));
 
 const context = { requestContext: { get: () => undefined } } as never;
 

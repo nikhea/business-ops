@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
+import { resolvePrincipal } from "../auth/principal";
 import {
   consumeOAuthState,
   getDefaultGoogleAccount,
@@ -9,7 +10,7 @@ import {
   saveGoogleAccount,
   saveOAuthState,
   setDefaultGoogleAccount,
-} from "../mastra/tools/google/google-redis";
+} from "../mastra/tools/google/google-store";
 
 const DEFAULT_SCOPES = [
   "openid",
@@ -145,7 +146,8 @@ googleOAuthRoutes.get("/connect", async (c) => {
   try {
     const { clientId } = getCredentials();
     const state = randomUUID();
-    await saveOAuthState(state);
+    const principal = await resolvePrincipal(c.req.raw).catch(() => null);
+    await saveOAuthState(state, principal?.id);
 
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authUrl.searchParams.set("client_id", clientId);
@@ -216,6 +218,7 @@ googleOAuthRoutes.get("/callback", async (c) => {
 
     await saveGoogleAccount({
       email,
+      userId: (await resolvePrincipal(c.req.raw).catch(() => null))?.id,
       name: profile.name,
       picture: profile.picture,
       refreshToken: tokens.refresh_token ?? existing?.refreshToken,
@@ -233,7 +236,7 @@ googleOAuthRoutes.get("/callback", async (c) => {
     return new Response(
       page(
         "Google account connected",
-        `<p><strong>${escapeHtml(email)}</strong> is now stored in Redis${isFirstAccount ? " and set as the default account" : ""}.</p>
+        `<p><strong>${escapeHtml(email)}</strong> is now stored in Postgres${isFirstAccount ? " and set as the default account" : ""}.</p>
          <p>Refresh token saved: <strong>${tokens.refresh_token || existing?.refreshToken ? "yes" : "no"}</strong>. Tools will refresh access tokens automatically.</p>
          <p><a href="/google/accounts">View connected accounts</a></p>`,
       ),

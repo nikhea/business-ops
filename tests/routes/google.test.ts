@@ -7,10 +7,24 @@ import {
   resetFakeGoogleStore,
   seedGoogleAccount,
   setDefaultGoogleAccount,
-} from "../helpers/fake-google-redis";
+} from "../helpers/fake-google-store";
 import { googleOAuthRoutes } from "../../src/routes/google";
 
-vi.mock("../../src/mastra/tools/google/google-redis", () => import("../helpers/fake-google-redis"));
+vi.mock("../../src/mastra/tools/google/google-store", () => import("../helpers/fake-google-store"));
+
+// The real module resolves a Better Auth session, which would hit Postgres.
+vi.mock("../../src/auth/principal", () => ({
+  resolvePrincipal: async () => ({
+    id: "user_test",
+    email: "admin@example.com",
+    name: "Admin",
+    role: "admin",
+  }),
+  resolveSessionPrincipal: async () => null,
+  resolveApiKeyPrincipal: async () => null,
+  readApiKey: () => null,
+  isAdmin: () => true,
+}));
 
 const app = new Hono();
 app.route("/google", googleOAuthRoutes);
